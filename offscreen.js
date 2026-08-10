@@ -9,22 +9,31 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function cropImage({ dataUrl, rect, viewport }) {
   const image = await loadImage(dataUrl);
-  const scaleX = image.naturalWidth / viewport.width;
-  const scaleY = image.naturalHeight / viewport.height;
-  const sx = Math.round(rect.x * scaleX);
-  const sy = Math.round(rect.y * scaleY);
-  const sw = Math.max(1, Math.round(rect.width * scaleX));
-  const sh = Math.max(1, Math.round(rect.height * scaleY));
+  const crop = captureUtils.calculateCrop(
+    image.naturalWidth,
+    image.naturalHeight,
+    rect,
+    viewport
+  );
 
   const canvas = document.createElement('canvas');
-  canvas.width = Math.min(sw, image.naturalWidth - sx);
-  canvas.height = Math.min(sh, image.naturalHeight - sy);
+  canvas.width = crop.width;
+  canvas.height = crop.height;
   const context = canvas.getContext('2d', { alpha: false });
-  context.drawImage(image, sx, sy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
+  context.drawImage(
+    image,
+    crop.sx,
+    crop.sy,
+    crop.width,
+    crop.height,
+    0,
+    0,
+    crop.width,
+    crop.height
+  );
 
-  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-  const blobUrl = URL.createObjectURL(blob);
-  return blobUrl;
+  // Data URL 随消息传递，不需要维护跨上下文 Blob URL 的生命周期。
+  return canvas.toDataURL('image/png');
 }
 
 function loadImage(url) {

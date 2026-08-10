@@ -1,4 +1,7 @@
+importScripts('utils.js');
+
 const OFFSCREEN_DOCUMENT = 'offscreen.html';
+let captureInProgress = false;
 
 chrome.action.onClicked.addListener(captureCurrentVideo);
 chrome.commands.onCommand.addListener((command) => {
@@ -6,6 +9,8 @@ chrome.commands.onCommand.addListener((command) => {
 });
 
 async function captureCurrentVideo(tab) {
+  if (captureInProgress) return;
+  captureInProgress = true;
   let activeTab;
   try {
     activeTab = tab?.id
@@ -34,15 +39,9 @@ async function captureCurrentVideo(tab) {
 
     if (!result?.ok) throw new Error(result?.error || '截图处理失败');
 
-    const cleanTitle = (frame.title || 'bilibili')
-      .replace(/【.*?】/g, '')
-      .replace(/[\\/:*?"<>|]/g, '_')
-      .trim()
-      .slice(0, 80);
-
     await chrome.downloads.download({
       url: result.dataUrl,
-      filename: `Bilibili截图/${cleanTitle}.png`,
+      filename: captureUtils.makeScreenshotFilename(frame.title),
       saveAs: false
     });
     await chrome.tabs.sendMessage(activeTab.id, { type: 'CAPTURE_FINISHED', ok: true });
@@ -55,6 +54,8 @@ async function captureCurrentVideo(tab) {
         error: error.message
       }).catch(() => {});
     }
+  } finally {
+    captureInProgress = false;
   }
 }
 
