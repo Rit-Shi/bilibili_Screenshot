@@ -24,6 +24,20 @@ async function captureCurrentVideo(tab) {
     const frame = await chrome.tabs.sendMessage(activeTab.id, { type: 'PREPARE_CAPTURE' });
     if (!frame?.ok) throw new Error(frame?.error || '没有找到正在显示的视频或图文');
 
+    if (frame.mode === 'direct-download') {
+      await chrome.downloads.download({
+        url: frame.url,
+        filename: captureUtils.makeScreenshotFilename(
+          frame.title,
+          frame.platform,
+          captureUtils.inferImageExtension(frame.url)
+        ),
+        saveAs: false
+      });
+      await chrome.tabs.sendMessage(activeTab.id, { type: 'CAPTURE_FINISHED', ok: true });
+      return;
+    }
+
     // 等两帧，让播放器控件在截图前完成隐藏。
     await new Promise((resolve) => setTimeout(resolve, 80));
     const dataUrl = await chrome.tabs.captureVisibleTab(activeTab.windowId, { format: 'png' });

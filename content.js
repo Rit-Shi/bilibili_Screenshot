@@ -20,6 +20,19 @@ async function prepareCapture() {
   const { element, style } = selected;
   const elementRect = element.getBoundingClientRect();
   const isVideo = element instanceof HTMLVideoElement;
+  if (!isVideo) {
+    const imageUrl = element.currentSrc || element.src;
+    if (/^https?:\/\//i.test(imageUrl)) {
+      return {
+        ok: true,
+        mode: 'direct-download',
+        url: imageUrl,
+        title: element.alt?.trim() || cleanPageTitle(document.title),
+        platform: 'douyin'
+      };
+    }
+  }
+
   const rect = captureUtils.calculateRenderedMediaRect(
     elementRect,
     isVideo ? element.videoWidth : element.naturalWidth,

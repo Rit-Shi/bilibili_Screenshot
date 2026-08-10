@@ -19,7 +19,7 @@
     };
   }
 
-  function makeScreenshotFilename(title, platform = 'bilibili') {
+  function makeScreenshotFilename(title, platform = 'bilibili', extension = 'png') {
     const cleanTitle = (title || '')
       .replace(/【.*?】/g, '')
       .replace(/[\\/:*?"<>|]/g, '_')
@@ -27,7 +27,17 @@
       .slice(0, 80) || 'bilibili';
 
     const folder = platform === 'douyin' ? '抖音截图' : 'Bilibili截图';
-    return `${folder}/${cleanTitle}.png`;
+    const safeExtension = /^(?:png|jpe?g|webp|avif)$/i.test(extension) ? extension.toLowerCase() : 'png';
+    return `${folder}/${cleanTitle}.${safeExtension}`;
+  }
+
+  function inferImageExtension(url) {
+    try {
+      const match = new URL(url).pathname.match(/\.(png|jpe?g|webp|avif)$/i);
+      return match?.[1]?.toLowerCase() || 'jpg';
+    } catch {
+      return 'jpg';
+    }
   }
 
   function calculateRenderedMediaRect(
@@ -109,6 +119,7 @@
     calculateCrop,
     calculateRenderedMediaRect,
     calculateVisibleArea,
+    inferImageExtension,
     makeScreenshotFilename
   };
 

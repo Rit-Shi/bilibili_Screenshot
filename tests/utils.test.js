@@ -4,6 +4,7 @@ const {
   calculateCrop,
   calculateRenderedMediaRect,
   calculateVisibleArea,
+  inferImageExtension,
   makeScreenshotFilename
 } = require('../utils.js');
 
@@ -106,4 +107,19 @@ test('抖音截图保存到独立目录', () => {
     makeScreenshotFilename('测试视频', 'douyin'),
     '抖音截图/测试视频.png'
   );
+});
+
+test('从抖音图片 URL 保留资源扩展名', () => {
+  assert.equal(
+    inferImageExtension('https://p3.douyinpic.com/example/image.webp?x-signature=abc'),
+    'webp'
+  );
+  assert.equal(
+    makeScreenshotFilename('图文', 'douyin', 'webp'),
+    '抖音截图/图文.webp'
+  );
+});
+
+test('无法识别图片格式时回退为 jpg', () => {
+  assert.equal(inferImageExtension('https://example.com/image?id=1'), 'jpg');
 });
