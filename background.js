@@ -33,13 +33,22 @@ async function captureCurrentVideo(tab) {
     });
 
     if (!result?.ok) throw new Error(result?.error || '截图处理失败');
-    const safeTitle = (frame.title || 'bilibili').replace(/[\\/:*?"<>|]/g, '_').slice(0, 80);
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+
+    const cleanTitle = (frame.title || 'bilibili')
+      .replace(/【.*?】/g, '')
+      .replace(/[\\/:*?"<>|]/g, '_')
+      .trim()
+      .slice(0, 80);
+
+    const response = await fetch(result.dataUrl);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
     await chrome.downloads.download({
-      url: result.dataUrl,
-      filename: `Bilibili截图/${safeTitle}_${timestamp}.png`,
+      url: blobUrl,
+      filename: `Bilibili截图/${cleanTitle}.png`,
       saveAs: false
     });
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
     await chrome.tabs.sendMessage(activeTab.id, { type: 'CAPTURE_FINISHED', ok: true });
   } catch (error) {
     console.error('[Bilibili Capture]', error);
