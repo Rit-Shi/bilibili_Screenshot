@@ -1,6 +1,10 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { calculateCrop, makeScreenshotFilename } = require('../utils.js');
+const {
+  calculateCrop,
+  calculateRenderedMediaRect,
+  makeScreenshotFilename
+} = require('../utils.js');
 
 test('按设备像素比例计算视频裁剪区域', () => {
   assert.deepEqual(
@@ -23,6 +27,45 @@ test('裁剪范围不会超过截图边界', () => {
       { width: 1000, height: 800 }
     ),
     { sx: 900, sy: 700, width: 100, height: 100 }
+  );
+});
+
+test('去除 contain 模式产生的上下黑边', () => {
+  assert.deepEqual(
+    calculateRenderedMediaRect(
+      { left: 0, top: 0, right: 1000, bottom: 1000, width: 1000, height: 1000 },
+      1920,
+      1080,
+      'contain',
+      '50% 50%'
+    ),
+    { left: 0, top: 218.75, right: 1000, bottom: 781.25, width: 1000, height: 562.5 }
+  );
+});
+
+test('去除 contain 模式产生的左右黑边', () => {
+  assert.deepEqual(
+    calculateRenderedMediaRect(
+      { left: 0, top: 0, right: 1600, bottom: 900, width: 1600, height: 900 },
+      1440,
+      1080,
+      'contain',
+      '50% 50%'
+    ),
+    { left: 200, top: 0, right: 1400, bottom: 900, width: 1200, height: 900 }
+  );
+});
+
+test('cover 模式只返回元素内可见画面', () => {
+  assert.deepEqual(
+    calculateRenderedMediaRect(
+      { left: 10, top: 20, right: 1010, bottom: 1020, width: 1000, height: 1000 },
+      1920,
+      1080,
+      'cover',
+      '50% 50%'
+    ),
+    { left: 10, top: 20, right: 1010, bottom: 1020, width: 1000, height: 1000 }
   );
 });
 

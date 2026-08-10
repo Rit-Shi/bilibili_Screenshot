@@ -29,7 +29,78 @@
     return `Bilibili截图/${cleanTitle}.png`;
   }
 
-  root.captureUtils = { calculateCrop, makeScreenshotFilename };
+  function calculateRenderedMediaRect(
+    elementRect,
+    intrinsicWidth,
+    intrinsicHeight,
+    objectFit = 'fill',
+    objectPosition = '50% 50%'
+  ) {
+    if (!intrinsicWidth || !intrinsicHeight || !elementRect.width || !elementRect.height) {
+      return {
+        left: elementRect.left,
+        top: elementRect.top,
+        right: elementRect.right,
+        bottom: elementRect.bottom,
+        width: elementRect.width,
+        height: elementRect.height
+      };
+    }
+
+    let scaleX = elementRect.width / intrinsicWidth;
+    let scaleY = elementRect.height / intrinsicHeight;
+
+    if (objectFit === 'contain') {
+      scaleX = scaleY = Math.min(scaleX, scaleY);
+    } else if (objectFit === 'cover') {
+      scaleX = scaleY = Math.max(scaleX, scaleY);
+    } else if (objectFit === 'none') {
+      scaleX = scaleY = 1;
+    } else if (objectFit === 'scale-down') {
+      scaleX = scaleY = Math.min(1, scaleX, scaleY);
+    }
+
+    const renderedWidth = intrinsicWidth * scaleX;
+    const renderedHeight = intrinsicHeight * scaleY;
+    const [positionX, positionY] = parseObjectPosition(objectPosition);
+    const renderedLeft = elementRect.left + (elementRect.width - renderedWidth) * positionX;
+    const renderedTop = elementRect.top + (elementRect.height - renderedHeight) * positionY;
+
+    const left = Math.max(elementRect.left, renderedLeft);
+    const top = Math.max(elementRect.top, renderedTop);
+    const right = Math.min(elementRect.right, renderedLeft + renderedWidth);
+    const bottom = Math.min(elementRect.bottom, renderedTop + renderedHeight);
+
+    return {
+      left,
+      top,
+      right,
+      bottom,
+      width: Math.max(0, right - left),
+      height: Math.max(0, bottom - top)
+    };
+  }
+
+  function parseObjectPosition(value) {
+    const keywords = { left: 0, top: 0, center: 0.5, right: 1, bottom: 1 };
+    const parts = String(value || '50% 50%').trim().split(/\s+/);
+    if (parts.length === 1) parts.push('50%');
+
+    return parts.slice(0, 2).map((part) => {
+      if (part in keywords) return keywords[part];
+      if (part.endsWith('%')) {
+        const percentage = Number.parseFloat(part);
+        if (Number.isFinite(percentage)) return percentage / 100;
+      }
+      return 0.5;
+    });
+  }
+
+  root.captureUtils = {
+    calculateCrop,
+    calculateRenderedMediaRect,
+    makeScreenshotFilename
+  };
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = root.captureUtils;

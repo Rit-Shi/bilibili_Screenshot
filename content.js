@@ -29,7 +29,15 @@ async function prepareCapture() {
   if (!video) return { ok: false, error: '没有找到可见的视频播放器' };
 
   video.pause();
-  const rect = video.getBoundingClientRect();
+  const elementRect = video.getBoundingClientRect();
+  const videoStyle = getComputedStyle(video);
+  const rect = captureUtils.calculateRenderedMediaRect(
+    elementRect,
+    video.videoWidth,
+    video.videoHeight,
+    videoStyle.objectFit,
+    videoStyle.objectPosition
+  );
   const clipped = {
     left: Math.max(0, rect.left),
     top: Math.max(0, rect.top),
