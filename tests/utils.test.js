@@ -79,3 +79,10 @@ test('清理标题中的标签和非法文件名字符', () => {
 test('空标题回退为 bilibili', () => {
   assert.equal(makeScreenshotFilename('【4K】'), 'Bilibili截图/bilibili.png');
 });
+
+test('抖音截图保存到独立目录', () => {
+  assert.equal(
+    makeScreenshotFilename('测试视频', 'douyin'),
+    '抖音截图/测试视频.png'
+  );
+});

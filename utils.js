@@ -19,14 +19,15 @@
     };
   }
 
-  function makeScreenshotFilename(title) {
+  function makeScreenshotFilename(title, platform = 'bilibili') {
     const cleanTitle = (title || '')
       .replace(/【.*?】/g, '')
       .replace(/[\\/:*?"<>|]/g, '_')
       .trim()
       .slice(0, 80) || 'bilibili';
 
-    return `Bilibili截图/${cleanTitle}.png`;
+    const folder = platform === 'douyin' ? '抖音截图' : 'Bilibili截图';
+    return `${folder}/${cleanTitle}.png`;
   }
 
   function calculateRenderedMediaRect(

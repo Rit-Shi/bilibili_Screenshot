@@ -49,7 +49,7 @@ async function prepareCapture() {
     return { ok: false, error: '视频不在当前可见区域内' };
   }
 
-  document.documentElement.dataset.biliCapture = 'true';
+  document.documentElement.dataset.videoCapture = 'true';
   ensureCaptureStyle();
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
@@ -62,7 +62,8 @@ async function prepareCapture() {
       height: clipped.bottom - clipped.top
     },
     viewport: { width: innerWidth, height: innerHeight },
-    title: document.title.replace(/_哔哩哔哩_bilibili$/i, '').trim()
+    title: cleanPageTitle(document.title),
+    platform: location.hostname === 'www.douyin.com' ? 'douyin' : 'bilibili'
   };
 }
 
@@ -71,13 +72,21 @@ function ensureCaptureStyle() {
   const style = document.createElement('style');
   style.id = 'bili-capture-style';
   style.textContent = `
-    html[data-bili-capture="true"] .bpx-player-control-wrap,
-    html[data-bili-capture="true"] .bpx-player-video-info,
-    html[data-bili-capture="true"] .bpx-player-toast-wrap,
-    html[data-bili-capture="true"] .bilibili-player-video-control-wrap,
-    html[data-bili-capture="true"] .bilibili-player-video-toast-wrp,
-    html[data-bili-capture="true"] .bili-danmaku-x-guide,
-    html[data-bili-capture="true"] .bpx-player-dm-tip-wrap {
+    html[data-video-capture="true"] .bpx-player-control-wrap,
+    html[data-video-capture="true"] .bpx-player-video-info,
+    html[data-video-capture="true"] .bpx-player-toast-wrap,
+    html[data-video-capture="true"] .bilibili-player-video-control-wrap,
+    html[data-video-capture="true"] .bilibili-player-video-toast-wrp,
+    html[data-video-capture="true"] .bili-danmaku-x-guide,
+    html[data-video-capture="true"] .bpx-player-dm-tip-wrap,
+    html[data-video-capture="true"] [data-e2e="player-container"] .xg-center-grid,
+    html[data-video-capture="true"] [data-e2e="player-container"] xg-controls,
+    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-controls,
+    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-playswitch,
+    html[data-video-capture="true"] [data-e2e="player-container"] .player-position-box-bottom,
+    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-prompt,
+    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-start,
+    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-loading {
       opacity: 0 !important;
       visibility: hidden !important;
     }
@@ -86,7 +95,14 @@ function ensureCaptureStyle() {
 }
 
 function restoreControls() {
-  delete document.documentElement.dataset.biliCapture;
+  delete document.documentElement.dataset.videoCapture;
+}
+
+function cleanPageTitle(title) {
+  return title
+    .replace(/_哔哩哔哩_bilibili$/i, '')
+    .replace(/\s*-\s*抖音$/i, '')
+    .trim();
 }
 
 function showToast(message, isError = false) {

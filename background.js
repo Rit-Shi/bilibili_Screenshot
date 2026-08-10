@@ -17,8 +17,8 @@ async function captureCurrentVideo(tab) {
       ? tab
       : (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
 
-    if (!activeTab?.id || !activeTab.url?.startsWith('https://www.bilibili.com/')) {
-      throw new Error('请先打开哔哩哔哩视频页面');
+    if (!activeTab?.id || !isSupportedUrl(activeTab.url)) {
+      throw new Error('请先打开哔哩哔哩或抖音视频页面');
     }
 
     const frame = await chrome.tabs.sendMessage(activeTab.id, { type: 'PREPARE_CAPTURE' });
@@ -41,7 +41,7 @@ async function captureCurrentVideo(tab) {
 
     await chrome.downloads.download({
       url: result.dataUrl,
-      filename: captureUtils.makeScreenshotFilename(frame.title),
+      filename: captureUtils.makeScreenshotFilename(frame.title, frame.platform),
       saveAs: false
     });
     await chrome.tabs.sendMessage(activeTab.id, { type: 'CAPTURE_FINISHED', ok: true });
@@ -56,6 +56,15 @@ async function captureCurrentVideo(tab) {
     }
   } finally {
     captureInProgress = false;
+  }
+}
+
+function isSupportedUrl(url = '') {
+  try {
+    const hostname = new URL(url).hostname;
+    return hostname === 'www.bilibili.com' || hostname === 'www.douyin.com';
+  } catch {
+    return false;
   }
 }
 
