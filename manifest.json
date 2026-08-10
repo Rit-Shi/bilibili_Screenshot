@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "网页视频暂停截图",
-  "version": "1.2.0",
-  "description": "暂停哔哩哔哩或抖音视频并保存干净的视频画面截图。",
+  "name": "网页视频截图",
+  "version": "1.2.1",
+  "description": "截取哔哩哔哩或抖音当前视频画面，不打断视频播放。",
   "permissions": ["activeTab", "downloads", "offscreen"],
   "host_permissions": [
     "https://www.bilibili.com/*",
@@ -12,7 +12,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "暂停并截图"
+    "default_title": "截取当前视频画面"
   },
   "commands": {
     "pause-and-capture": {
@@ -20,7 +20,7 @@
         "default": "Alt+Shift+S",
         "mac": "Alt+Shift+S"
       },
-      "description": "暂停并截取当前视频画面"
+      "description": "截取当前视频画面"
     }
   },
   "content_scripts": [

@@ -28,7 +28,6 @@ async function prepareCapture() {
   const video = videos[0];
   if (!video) return { ok: false, error: '没有找到可见的视频播放器' };
 
-  video.pause();
   const elementRect = video.getBoundingClientRect();
   const videoStyle = getComputedStyle(video);
   const rect = captureUtils.calculateRenderedMediaRect(
