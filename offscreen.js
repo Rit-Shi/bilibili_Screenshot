@@ -22,7 +22,9 @@ async function cropImage({ dataUrl, rect, viewport }) {
   const context = canvas.getContext('2d', { alpha: false });
   context.drawImage(image, sx, sy, canvas.width, canvas.height, 0, 0, canvas.width, canvas.height);
 
-  return canvas.toDataURL('image/png');
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  const blobUrl = URL.createObjectURL(blob);
+  return blobUrl;
 }
 
 function loadImage(url) {
