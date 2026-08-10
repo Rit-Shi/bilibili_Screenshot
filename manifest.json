@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "网页视频截图",
-  "version": "1.2.2",
-  "description": "截取哔哩哔哩或抖音当前视频画面，不打断视频播放。",
+  "version": "1.3.0",
+  "description": "截取哔哩哔哩或抖音当前视频、图文画面，不打断视频播放。",
   "permissions": ["activeTab", "downloads", "offscreen"],
   "host_permissions": [
     "https://www.bilibili.com/*",
@@ -12,7 +12,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "截取当前视频画面"
+    "default_title": "截取当前视频或图文"
   },
   "commands": {
     "pause-and-capture": {
@@ -20,7 +20,7 @@
         "default": "Alt+Shift+S",
         "mac": "Alt+Shift+S"
       },
-      "description": "截取当前视频画面"
+      "description": "截取当前视频或图文画面"
     }
   },
   "content_scripts": [

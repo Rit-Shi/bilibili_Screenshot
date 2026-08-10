@@ -18,11 +18,11 @@ async function captureCurrentVideo(tab) {
       : (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
 
     if (!activeTab?.id || !isSupportedUrl(activeTab.url)) {
-      throw new Error('请先打开哔哩哔哩或抖音视频页面');
+      throw new Error('请先打开哔哩哔哩或抖音视频、图文页面');
     }
 
     const frame = await chrome.tabs.sendMessage(activeTab.id, { type: 'PREPARE_CAPTURE' });
-    if (!frame?.ok) throw new Error(frame?.error || '没有找到正在显示的视频');
+    if (!frame?.ok) throw new Error(frame?.error || '没有找到正在显示的视频或图文');
 
     // 等两帧，让播放器控件在截图前完成隐藏。
     await new Promise((resolve) => setTimeout(resolve, 80));
@@ -46,7 +46,7 @@ async function captureCurrentVideo(tab) {
     });
     await chrome.tabs.sendMessage(activeTab.id, { type: 'CAPTURE_FINISHED', ok: true });
   } catch (error) {
-    console.error('[Bilibili Capture]', error);
+    console.error('[Web Media Capture]', error);
     if (activeTab?.id) {
       chrome.tabs.sendMessage(activeTab.id, {
         type: 'CAPTURE_FINISHED',

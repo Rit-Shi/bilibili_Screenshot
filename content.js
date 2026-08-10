@@ -13,41 +13,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 async function prepareCapture() {
-  const videos = [...document.querySelectorAll('video')]
-    .map((video) => {
-      const rect = video.getBoundingClientRect();
-      const style = getComputedStyle(video);
-      const visibleArea = captureUtils.calculateVisibleArea(
-        rect,
-        { width: innerWidth, height: innerHeight }
-      );
-      return { video, rect, style, visibleArea };
-    })
-    .filter(({ rect, style, visibleArea }) =>
-      rect.width > 100 &&
-      rect.height > 100 &&
-      visibleArea > 10_000 &&
-      style.display !== 'none' &&
-      style.visibility !== 'hidden' &&
-      style.opacity !== '0'
-    )
-    .sort((a, b) => {
-      const aPlaying = !a.video.paused && !a.video.ended ? 1 : 0;
-      const bPlaying = !b.video.paused && !b.video.ended ? 1 : 0;
-      return bPlaying - aPlaying || b.visibleArea - a.visibleArea;
-    });
+  const mediaCandidates = collectMediaCandidates();
+  const selected = mediaCandidates[0];
+  if (!selected) return { ok: false, error: '没有找到可见的视频或图文' };
 
-  const video = videos[0]?.video;
-  if (!video) return { ok: false, error: '没有找到可见的视频播放器' };
-
-  const elementRect = video.getBoundingClientRect();
-  const videoStyle = getComputedStyle(video);
+  const { element, style } = selected;
+  const elementRect = element.getBoundingClientRect();
+  const isVideo = element instanceof HTMLVideoElement;
   const rect = captureUtils.calculateRenderedMediaRect(
     elementRect,
-    video.videoWidth,
-    video.videoHeight,
-    videoStyle.objectFit,
-    videoStyle.objectPosition
+    isVideo ? element.videoWidth : element.naturalWidth,
+    isVideo ? element.videoHeight : element.naturalHeight,
+    style.objectFit,
+    style.objectPosition
   );
   const clipped = {
     left: Math.max(0, rect.left),
@@ -57,11 +35,12 @@ async function prepareCapture() {
   };
 
   if (clipped.right <= clipped.left || clipped.bottom <= clipped.top) {
-    return { ok: false, error: '视频不在当前可见区域内' };
+    return { ok: false, error: `${isVideo ? '视频' : '图文'}不在当前可见区域内` };
   }
 
   document.documentElement.dataset.videoCapture = 'true';
   ensureCaptureStyle();
+  hideOverlays(element, clipped);
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
   return {
@@ -76,6 +55,72 @@ async function prepareCapture() {
     title: cleanPageTitle(document.title),
     platform: location.hostname === 'www.douyin.com' ? 'douyin' : 'bilibili'
   };
+}
+
+function collectMediaCandidates() {
+  const viewport = { width: innerWidth, height: innerHeight };
+  const elements = [...document.querySelectorAll('video')];
+
+  const isDouyinImagePage =
+    location.hostname === 'www.douyin.com' &&
+    (new URLSearchParams(location.search).has('modal_id') || location.pathname.startsWith('/note/'));
+  if (isDouyinImagePage) {
+    elements.push(...document.querySelectorAll('img'));
+  }
+
+  return elements
+    .map((element) => {
+      const rect = element.getBoundingClientRect();
+      const style = getComputedStyle(element);
+      const visibleArea = captureUtils.calculateVisibleArea(
+        rect,
+        viewport
+      );
+      const isVideo = element instanceof HTMLVideoElement;
+      const intrinsicWidth = isVideo ? element.videoWidth : element.naturalWidth;
+      const intrinsicHeight = isVideo ? element.videoHeight : element.naturalHeight;
+      const isPlaying = isVideo && !element.paused && !element.ended;
+      const isLoginAsset = !isVideo && Boolean(element.closest('#douyin-login-new-id'));
+      const score = visibleArea * (isPlaying ? 1.5 : style.objectFit === 'contain' ? 1.2 : 1);
+
+      return {
+        element,
+        rect,
+        style,
+        visibleArea,
+        intrinsicWidth,
+        intrinsicHeight,
+        isLoginAsset,
+        score
+      };
+    })
+    .filter(({ rect, style, visibleArea, intrinsicWidth, intrinsicHeight, isLoginAsset }) =>
+      rect.width > 100 &&
+      rect.height > 100 &&
+      visibleArea > 10_000 &&
+      intrinsicWidth > 200 &&
+      intrinsicHeight > 200 &&
+      !isLoginAsset &&
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      style.opacity !== '0'
+    )
+    .sort((a, b) => b.score - a.score);
+}
+
+function hideOverlays(media, rect) {
+  const fractions = [0.1, 0.5, 0.9];
+  for (const xFraction of fractions) {
+    for (const yFraction of fractions) {
+      const x = rect.left + (rect.right - rect.left) * xFraction;
+      const y = rect.top + (rect.bottom - rect.top) * yFraction;
+      for (const element of document.elementsFromPoint(x, y)) {
+        if (element === media) break;
+        if (element.contains(media) || media.contains(element)) continue;
+        element.classList.add('web-media-capture-overlay');
+      }
+    }
+  }
 }
 
 function ensureCaptureStyle() {
@@ -97,7 +142,8 @@ function ensureCaptureStyle() {
     html[data-video-capture="true"] [data-e2e="player-container"] .player-position-box-bottom,
     html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-prompt,
     html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-start,
-    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-loading {
+    html[data-video-capture="true"] [data-e2e="player-container"] .xgplayer-loading,
+    html[data-video-capture="true"] .web-media-capture-overlay {
       opacity: 0 !important;
       visibility: hidden !important;
     }
@@ -107,6 +153,9 @@ function ensureCaptureStyle() {
 
 function restoreControls() {
   delete document.documentElement.dataset.videoCapture;
+  document.querySelectorAll('.web-media-capture-overlay').forEach((element) => {
+    element.classList.remove('web-media-capture-overlay');
+  });
 }
 
 function cleanPageTitle(title) {
