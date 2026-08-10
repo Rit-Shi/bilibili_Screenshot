@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "哔哩哔哩暂停截图",
+  "version": "1.0.0",
+  "description": "暂停当前哔哩哔哩视频并保存干净的视频画面截图。",
+  "permissions": ["activeTab", "downloads", "offscreen"],
+  "host_permissions": ["https://www.bilibili.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "暂停并截图"
+  },
+  "commands": {
+    "pause-and-capture": {
+      "suggested_key": {
+        "default": "Alt+Shift+S",
+        "mac": "Alt+Shift+S"
+      },
+      "description": "暂停并截取当前视频画面"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.bilibili.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
