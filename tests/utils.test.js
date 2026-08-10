@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   calculateCrop,
   calculateRenderedMediaRect,
+  calculateVisibleArea,
   makeScreenshotFilename
 } = require('../utils.js');
 
@@ -66,6 +67,26 @@ test('cover 模式只返回元素内可见画面', () => {
       '50% 50%'
     ),
     { left: 10, top: 20, right: 1010, bottom: 1020, width: 1000, height: 1000 }
+  );
+});
+
+test('计算视频与视口相交的可见面积', () => {
+  assert.equal(
+    calculateVisibleArea(
+      { left: -100, top: 100, right: 300, bottom: 500 },
+      { width: 1000, height: 800 }
+    ),
+    120_000
+  );
+});
+
+test('屏幕外视频的可见面积为零', () => {
+  assert.equal(
+    calculateVisibleArea(
+      { left: 1200, top: 100, right: 1600, bottom: 500 },
+      { width: 1000, height: 800 }
+    ),
+    0
   );
 });
 

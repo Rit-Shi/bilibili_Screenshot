@@ -14,18 +14,30 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
 async function prepareCapture() {
   const videos = [...document.querySelectorAll('video')]
-    .filter((video) => {
+    .map((video) => {
       const rect = video.getBoundingClientRect();
       const style = getComputedStyle(video);
-      return rect.width > 100 && rect.height > 100 && style.display !== 'none' && style.visibility !== 'hidden';
+      const visibleArea = captureUtils.calculateVisibleArea(
+        rect,
+        { width: innerWidth, height: innerHeight }
+      );
+      return { video, rect, style, visibleArea };
     })
+    .filter(({ rect, style, visibleArea }) =>
+      rect.width > 100 &&
+      rect.height > 100 &&
+      visibleArea > 10_000 &&
+      style.display !== 'none' &&
+      style.visibility !== 'hidden' &&
+      style.opacity !== '0'
+    )
     .sort((a, b) => {
-      const ar = a.getBoundingClientRect();
-      const br = b.getBoundingClientRect();
-      return br.width * br.height - ar.width * ar.height;
+      const aPlaying = !a.video.paused && !a.video.ended ? 1 : 0;
+      const bPlaying = !b.video.paused && !b.video.ended ? 1 : 0;
+      return bPlaying - aPlaying || b.visibleArea - a.visibleArea;
     });
 
-  const video = videos[0];
+  const video = videos[0]?.video;
   if (!video) return { ok: false, error: '没有找到可见的视频播放器' };
 
   const elementRect = video.getBoundingClientRect();

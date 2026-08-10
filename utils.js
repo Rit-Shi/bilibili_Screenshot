@@ -82,6 +82,14 @@
     };
   }
 
+  function calculateVisibleArea(rect, viewport) {
+    const left = Math.max(0, rect.left);
+    const top = Math.max(0, rect.top);
+    const right = Math.min(viewport.width, rect.right);
+    const bottom = Math.min(viewport.height, rect.bottom);
+    return Math.max(0, right - left) * Math.max(0, bottom - top);
+  }
+
   function parseObjectPosition(value) {
     const keywords = { left: 0, top: 0, center: 0.5, right: 1, bottom: 1 };
     const parts = String(value || '50% 50%').trim().split(/\s+/);
@@ -100,6 +108,7 @@
   root.captureUtils = {
     calculateCrop,
     calculateRenderedMediaRect,
+    calculateVisibleArea,
     makeScreenshotFilename
   };
 
