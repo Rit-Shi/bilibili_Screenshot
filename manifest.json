@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "网页视频截图",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "截取视频画面或直接保存抖音当前图文原图，不打断视频播放。",
   "permissions": ["activeTab", "downloads", "offscreen"],
   "host_permissions": [

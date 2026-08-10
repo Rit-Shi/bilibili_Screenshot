@@ -8,7 +8,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
   if (message.type === 'CAPTURE_FINISHED') {
     restoreControls();
-    showToast(message.ok ? '截图已保存' : (message.error || '截图失败'), !message.ok);
+    if (!message.ok) showToast(message.error || '截图失败', true);
   }
 });
 
